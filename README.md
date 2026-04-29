@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD033 MD041 MD045 -->
+<!-- markdownlint-disable MD033 MD041 -->
 <p align="center">
   <img src="https://github.com/redhat-plumbers-in-action/team/blob/70f67465cc46e02febb16aaa1cace2ceb82e6e5c/members/black-plumber.png" width="100" />
   <h1 align="center">Issue Commentator</h1>
@@ -30,21 +30,47 @@
 
 <!-- -->
 
-> ...
+Issue Commentator is a GitHub Action that creates and updates status comments on issues and pull requests. It uses hidden metadata to track previously posted comments, ensuring that repeated runs update the existing comment instead of creating duplicates.
 
 ## Features
 
-> * ...
+* Automatically creates comments on GitHub issues and pull requests
+* Tracks previously posted comments using hidden metadata in the issue body -- repeated runs update the existing comment instead of posting duplicates
+* Skips unnecessary API calls when the comment content has not changed
+* Supports multi-section messages -- each line of the `message` input becomes a separate section divided by horizontal rules (`---`)
 
 ## Usage
 
 ```yml
+name: Issue Comment
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
 
+permissions:
+  contents: read
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Comment on Pull Request
+        uses: redhat-plumbers-in-action/issue-commentator@v1
+        with:
+          issue: ${{ github.event.pull_request.number }}
+          message: |
+            Hello from Issue Commentator!
+          token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### Real-life examples
-
-> ...
+> [!NOTE]
+>
+> The `token` must have permission to create and update comments on the target issue or pull request. When using `secrets.GITHUB_TOKEN`, ensure the job has `issues: write` and/or `pull-requests: write` permissions.
 
 ## Configuration options
 
@@ -55,22 +81,38 @@ Action currently accepts the following options:
 
 - uses: redhat-plumbers-in-action/issue-commentator@v1
   with:
-    milliseconds: <number>
+    issue:    <number>
+    message:  <string>
+    token:    <GitHub token or PAT>
 
 # ...
 ```
 
-### milliseconds
+### issue
 
-> ...
+Number of the issue or pull request where the comment should be posted.
 
-> * default value: `undefined`
-> * requirements: `required`
+* default value: `undefined`
+* requirements: `required`
 
-## Policy
+### message
 
-> ...
+Content of the comment. Supports multi-line input where each non-empty line becomes a separate section in the final comment, divided by horizontal rules (`---`). Individual lines can optionally be JSON strings which will be parsed before composing the final message.
 
-## Limitations
+* default value: `undefined`
+* requirements: `required`
 
-> ...
+### token
+
+GitHub token or PAT used for creating and updating comments.
+
+```yml
+# required permissions
+permissions:
+  issues: write
+  pull-requests: write
+```
+
+* default value: `undefined`
+* requirements: `required`
+* recomended value: `secrets.GITHUB_TOKEN`
